@@ -1,9 +1,15 @@
 export type StatusPedido = 'RASCUNHO' | 'ABERTO' | 'EM_RISCO' | 'FATURADO'
 
-export type AcaoPedido = 'editar' | 'remover_remessa' | 'excluir' | 'aprovar'
-
-/** Fonte única da lista de ações. `PermissoesPedido` deriva dela. */
+/** Fonte única da lista de ações. Tudo abaixo deriva desta constante. */
 export const ACOES_PEDIDO = ['editar', 'remover_remessa', 'excluir', 'aprovar'] as const
+
+/**
+ * Derivado da constante, não declarado ao lado dela. Duas listas escritas à mão
+ * divergem: adicionar uma ação ao tipo e esquecer a constante não quebraria nada,
+ * e uma enumeração desatualizada esconde uma ação da interface pelo mesmo mecanismo
+ * silencioso que um `Partial` esconde uma permissão.
+ */
+export type AcaoPedido = (typeof ACOES_PEDIDO)[number]
 
 /**
  * Record COMPLETO, nunca Partial. Ver 06-seguranca.md §9.3: um Partial permite

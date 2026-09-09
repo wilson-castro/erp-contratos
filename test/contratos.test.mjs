@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import { ACOES_PEDIDO, MENSAGENS } from '../dist/index.js'
 
 test('ACOES_PEDIDO cobre exatamente as chaves de PermissoesPedido', () => {
-  // Um Record completo tem uma chave por ação. Se alguém adicionar uma ação
-  // ao tipo sem adicionar aqui, este teste é o que pega.
+  // `AcaoPedido` deriva de ACOES_PEDIDO, então o compilador já garante que o tipo
+  // acompanha a constante. Este teste guarda o outro lado: que este literal de
+  // exemplo, usado pelos testes de tipo, não fique para trás da constante.
   const permissoesDeExemplo = {
     editar: false, remover_remessa: false, excluir: false, aprovar: false,
   }
