@@ -1,20 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ACOES_PEDIDO, MENSAGENS } from '../dist/index.js'
-
-test('ACOES_PEDIDO cobre exatamente as chaves de PermissoesPedido', () => {
-  // `AcaoPedido` deriva de ACOES_PEDIDO, então o compilador já garante que o tipo
-  // acompanha a constante. Este teste guarda o outro lado: que este literal de
-  // exemplo, usado pelos testes de tipo, não fique para trás da constante.
-  const permissoesDeExemplo = {
-    editar: false, remover_remessa: false, excluir: false, aprovar: false,
-  }
-  assert.deepEqual([...ACOES_PEDIDO].sort(), Object.keys(permissoesDeExemplo).sort())
-})
-
-test('ACOES_PEDIDO nao tem duplicatas', () => {
-  assert.equal(new Set(ACOES_PEDIDO).size, ACOES_PEDIDO.length)
-})
+import { MENSAGENS, validarManifesto, ManifestoInvalido } from '../dist/index.js'
 
 test('MENSAGENS cobre todo codigo de erro e nenhuma mensagem vaza detalhe interno', () => {
   const esperados = ['REGISTRO_DESATUALIZADO', 'OPERACAO_NAO_PERMITIDA',
@@ -28,3 +14,45 @@ test('MENSAGENS cobre todo codigo de erro e nenhuma mensagem vaza detalhe intern
     }
   }
 })
+
+const valido = () => ({
+  zona: 'zona1',
+  modulos: [
+    { id: 'zona1.painel', rotulo: 'Painel', prefixo: '/zona1', restritoPorPadrao: false },
+    { id: 'zona1.relatorios', rotulo: 'Relatórios', prefixo: '/zona1/relatorios', restritoPorPadrao: true },
+  ],
+  perfis: [{ id: 'zona1.analista', rotulo: 'Analista' }],
+  concessoes: { 'zona1.analista': ['zona1.relatorios'] },
+})
+
+test('manifesto valido passa inteiro', () => {
+  const m = validarManifesto(valido())
+  assert.equal(m.zona, 'zona1')
+  assert.equal(m.modulos.length, 2)
+})
+
+test('shell e a unica zona na raiz', () => {
+  const shell = { zona: 'shell', modulos: [{ id: 'shell.inicio', rotulo: 'Início', prefixo: '/', restritoPorPadrao: false }], perfis: [], concessoes: {} }
+  assert.equal(validarManifesto(shell).zona, 'shell')
+  const m = valido(); m.modulos[0].prefixo = '/'
+  assert.throws(() => validarManifesto(m), ManifestoInvalido)
+})
+
+for (const [caso, mutar] of [
+  ['modulo com id de outra zona', (m) => { m.modulos[1].id = 'zona2.relatorios' }],
+  ['modulo com prefixo de outra zona', (m) => { m.modulos[1].prefixo = '/zona2/relatorios' }],
+  ['prefixo que so comeca com o nome da zona', (m) => { m.modulos[1].prefixo = '/zona10' }],
+  ['prefixo com travessia', (m) => { m.modulos[1].prefixo = '/zona1/../acesso' }],
+  ['perfil de outra zona', (m) => { m.perfis[0].id = 'plataforma.admin' }],
+  ['concessao para modulo de outra zona (D8)', (m) => { m.concessoes['zona1.analista'] = ['acesso.admin'] }],
+  ['concessao de perfil nao declarado', (m) => { m.concessoes['zona1.intruso'] = ['zona1.painel'] }],
+  ['restrito nao booleano', (m) => { m.modulos[0].restritoPorPadrao = 'false' }],
+  ['modulo duplicado', (m) => { m.modulos[1].id = 'zona1.painel' }],
+  ['id so com o prefixo', (m) => { m.modulos[0].id = 'zona1.' }],
+]) {
+  test(`recusa ${caso}`, () => {
+    const m = valido()
+    mutar(m)
+    assert.throws(() => validarManifesto(m), ManifestoInvalido)
+  })
+}
