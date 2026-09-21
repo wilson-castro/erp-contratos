@@ -49,6 +49,7 @@ for (const [caso, mutar] of [
   ['restrito nao booleano', (m) => { m.modulos[0].restritoPorPadrao = 'false' }],
   ['modulo duplicado', (m) => { m.modulos[1].id = 'zona1.painel' }],
   ['id so com o prefixo', (m) => { m.modulos[0].id = 'zona1.' }],
+  ['perfil duplicado', (m) => { m.perfis.push({ id: 'zona1.analista', rotulo: 'De novo' }) }],
 ]) {
   test(`recusa ${caso}`, () => {
     const m = valido()
@@ -56,3 +57,9 @@ for (const [caso, mutar] of [
     assert.throws(() => validarManifesto(m), ManifestoInvalido)
   })
 }
+
+test('zona plataforma e reservada: perfil global nao nasce de manifesto (invariante 17)', () => {
+  const m = { zona: 'plataforma', modulos: [{ id: 'plataforma.x', rotulo: 'X', prefixo: '/plataforma', restritoPorPadrao: false }],
+              perfis: [{ id: 'plataforma.super', rotulo: 'Super' }], concessoes: {} }
+  assert.throws(() => validarManifesto(m), ManifestoInvalido)
+})

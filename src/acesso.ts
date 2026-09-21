@@ -42,6 +42,12 @@ export class ManifestoInvalido extends Error {
 }
 
 const ID_ZONA = /^[a-z][a-z0-9-]{0,31}$/
+/**
+ * `plataforma` não é zona: perfis `plataforma.*` são globais e nascem no domínio de gestão
+ * de acesso. Um manifesto que se dissesse `plataforma` criaria perfil que concede módulo de
+ * qualquer zona.
+ */
+export const ZONAS_RESERVADAS: readonly string[] = ['plataforma']
 const SEGMENTO = /^[a-z0-9][a-z0-9-]*$/
 
 const ehTexto = (v: unknown): v is string => typeof v === 'string' && v.length > 0
@@ -61,6 +67,7 @@ export function validarManifesto(entrada: unknown): ManifestoDeZona {
   const m = entrada as Partial<ManifestoDeZona> | null
   if (!m || typeof m !== 'object') throw new ManifestoInvalido('não é objeto')
   if (!ehTexto(m.zona) || !ID_ZONA.test(m.zona)) throw new ManifestoInvalido('zona')
+  if (ZONAS_RESERVADAS.includes(m.zona)) throw new ManifestoInvalido(`zona reservada: ${m.zona}`)
   const zona = m.zona
   const doPrefixo = (id: unknown) => ehTexto(id) && id.startsWith(`${zona}.`) && id.length > zona.length + 1
 
@@ -82,6 +89,7 @@ export function validarManifesto(entrada: unknown): ManifestoDeZona {
   for (const p of m.perfis) {
     if (!doPrefixo(p?.id)) throw new ManifestoInvalido(`perfil fora da zona: ${String(p?.id)}`)
     if (!ehTexto(p.rotulo)) throw new ManifestoInvalido(`rotulo de ${p.id}`)
+    if (perfis.has(p.id)) throw new ManifestoInvalido(`perfil duplicado: ${p.id}`)
     perfis.add(p.id)
   }
 
