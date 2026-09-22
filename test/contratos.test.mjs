@@ -63,3 +63,9 @@ test('zona plataforma e reservada: perfil global nao nasce de manifesto (invaria
               perfis: [{ id: 'plataforma.super', rotulo: 'Super' }], concessoes: {} }
   assert.throws(() => validarManifesto(m), ManifestoInvalido)
 })
+
+test('contratos v2: tipos de acesso efetivo e decisao sao exportados', async () => {
+  const mod = await import('../dist/index.js')
+  assert.ok(mod.ManifestoInvalido)
+  assert.ok(mod.MENSAGENS)
+})

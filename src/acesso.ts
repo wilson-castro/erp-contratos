@@ -34,6 +34,43 @@ export type ModuloPermitido = {
   readonly prefixo: string
 }
 
+/** Módulo com acesso efetivo e funcionalidades concedidas na gestão de acesso v2 (ADR-0014). */
+export type ModuloEfetivo = {
+  readonly id: string
+  readonly zona?: string
+  readonly rotulo?: string
+  readonly prefixo?: string
+  readonly perfis: readonly string[]
+  readonly funcionalidades: readonly string[]
+}
+
+/** Usuário autenticado, seus papéis e módulos com acesso efetivo na v2 (ADR-0014). */
+export type Eu = {
+  readonly pessoa: {
+    readonly id: string
+    readonly cpf: string
+    readonly nome: string
+    readonly email: string
+    readonly vinculo: string
+  }
+  readonly papeis: readonly string[]
+  readonly modulos: readonly ModuloEfetivo[]
+}
+
+/** Decisão de autorização pontual retornada por POST /v2/decisoes. */
+export type DecisaoDeAcesso = {
+  readonly permitida: boolean
+  readonly motivo?: string
+}
+
+/** Evento de revogação/mudança de acesso retornado por GET /v2/eventos. */
+export type EventoDeAcesso = {
+  readonly id: number
+  readonly tipo: string
+  readonly pessoa: string
+  readonly dataHora: string
+}
+
 export class ManifestoInvalido extends Error {
   constructor(motivo: string) {
     super(`manifesto invalido: ${motivo}`)
