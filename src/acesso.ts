@@ -32,6 +32,8 @@ export type ModuloPermitido = {
   readonly zona: string
   readonly rotulo: string
   readonly prefixo: string
+  readonly perfis?: readonly string[]
+  readonly funcionalidades?: readonly string[]
 }
 
 /** Módulo com acesso efetivo e funcionalidades concedidas na gestão de acesso v2 (ADR-0014). */
