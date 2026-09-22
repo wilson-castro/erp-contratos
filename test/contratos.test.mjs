@@ -69,3 +69,29 @@ test('contratos v2: tipos de acesso efetivo e decisao sao exportados', async () 
   assert.ok(mod.ManifestoInvalido)
   assert.ok(mod.MENSAGENS)
 })
+
+// --- manifesto v2 (ADR-0014, adendo 1) -------------------------------------------------------
+import { validarManifestoDeModulo, ehFuncionalidade } from '../dist/index.js'
+
+const v2 = () => ({ id: 'zona1', nome: 'Zona 1', funcionalidades: ['painel.ver', 'relatorios.ver'] })
+
+test('manifesto v2 valido passa sem campo extra', () => {
+  assert.deepEqual(validarManifestoDeModulo({ ...v2(), perfis: ['zona1.x'] }), v2())
+})
+
+test('manifesto v2 recusa id reservado, com ponto ou fora do formato', () => {
+  for (const id of ['plataforma', 'shell', 'zona1.painel', 'Zona1', '', 1]) {
+    assert.throws(() => validarManifestoDeModulo({ ...v2(), id }), ManifestoInvalido, String(id))
+  }
+})
+
+test('manifesto v2 recusa funcionalidade absoluta, com um segmento, duplicada ou lista vazia', () => {
+  for (const funcionalidades of [['zona1.painel.ver'], ['painel'], ['painel.ver', 'painel.ver'], [], 'painel.ver']) {
+    assert.throws(() => validarManifestoDeModulo({ ...v2(), funcionalidades }), ManifestoInvalido, JSON.stringify(funcionalidades))
+  }
+})
+
+test('funcionalidade tem exatamente dois segmentos minúsculos', () => {
+  assert.ok(ehFuncionalidade('tarefas.concluir'))
+  for (const f of ['tarefas', 'a.b.c', 'Tarefas.ver', '.ver', 'ver.', 1]) assert.ok(!ehFuncionalidade(f), String(f))
+})
